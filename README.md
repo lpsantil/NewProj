@@ -1,13 +1,13 @@
-= NewProj =
+# NewProj #
 
 A Makefile and directory structure for building new C Projects or Libraries
 
-== Howto use NewProj ==
+## Howto use NewProj ##
 
-# Clone or fork this repo
-# Remove the `.git` folder and `.gitignore` file (if need be)
-# Rename `LICENSE` to `LICENSE.Makefile`
-# Customize the project layout and `Makefile` to your needs
+* Clone or fork this repo
+* Remove the `.git` folder and `.gitignore` file (if need be)
+* Rename `LICENSE` to `LICENSE.Makefile`
+* Customize the project layout and `Makefile` to your needs
 
 If you\'re building an binary,
 * In `Makefile`, define `EXE`
