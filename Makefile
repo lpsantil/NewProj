@@ -1,8 +1,8 @@
-vDEST ?=
+DEST ?=
 PREFIX ?= /usr/local
 
-CFLAGS = -Os -Wall -ansi -pedantic
-LDFLAGS = -s
+CFLAGS ?= -Os -Wall -ansi -pedantic
+LDFLAGS ?= -s
 DDIR = docs
 DSRC =
 SRC = #$(shell ls src/*.c)
@@ -35,9 +35,7 @@ LIBTAP = -Ldeps/picotap -lptap
 	$(CC) $(CFLAGS) -I$(IDIR) -c $< -o $@
 
 # all: $(DEPS) $(LIB) $(EXE)
-
-all: $(DEPS) $(LIB)
-
+# all: $(DEPS) $(LIB)
 # all: $(DEPS) $(EXE)
 
 # DEPS
