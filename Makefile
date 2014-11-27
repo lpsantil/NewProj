@@ -75,19 +75,19 @@ runtest: $(TEXE)
 	for T in $^ ; do $(TAP) $$T ; done
 
 start_ci:
-	watch time -p make clean all & echo $$! > tmp.ci.pid && fg 1
+	watch time -p make clean all & echo $$! > tmp.ci.pid
 
 stop_ci:
 	kill -9 $(TMPCI)
 
 start_ct:
-	watch time -p make test & echo $$! > tmp.ct.pid && fg 1
+	watch time -p make test & echo $$! > tmp.ct.pid
 
 stop_ct:
 	kill -9 $(TMPCT)
 
 start_cd:
-	watch time -p make install & echo $$! > tmp.cd.pid && fg 1
+	watch time -p make install & echo $$! > tmp.cd.pid
 
 stop_cd:
 	kill -9 $(TMPCD)

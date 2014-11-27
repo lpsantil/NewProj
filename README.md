@@ -25,7 +25,7 @@ If you're building a library
 * Then you can type `make`, `make test`, `make install`, `make showconfig`
 
 With `watch` installed, you can do continuous integration, test, or deployment.
-* For continuous integration (`make`), type `make start_ci`.  To kill it, type `make stop_ci`
+* For continuous integration (`make clean all`), type `make start_ci`.  To kill it, type `make stop_ci`
 * For continuous test (`make test`), type `make start_ct`.  To kill it, type `make stop_cd`
 * For continuous deployment (`make install`), type `make start_cd`.  To kill it, type `make stop_cd`
 
