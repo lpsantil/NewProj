@@ -1,5 +1,17 @@
 DEST ?=
-PREFIX ?= /usr/local
+PREFIX ?= usr/local
+
+INSTALL_PATH = $(DEST)/$(PREFIX)
+
+######################################################################
+# Core count
+CORES ?= 1
+
+# Basic feature detection
+OS = $(shell uname)
+ARCH ?= $(shell arch)
+
+######################################################################
 
 CFLAGS ?= -Os -Wall -ansi -pedantic
 LDFLAGS ?= -s
@@ -27,32 +39,19 @@ TMPCT = $(shell cat tmp.ct.pid)
 TMPCD = $(shell cat tmp.cd.pid)
 
 # DEPS
-DEPS = libDEP.a
-LIBDEP = -Ldeps/DEP -lDEP
+# DEPS = libDEP.a
+# LIBDEP = -Ldeps/DEP -lDEP
 
 # TDEPS
-TDEPS = ptap libptap.a
-TAP = deps/picotap/ptap
-LIBTAP = -Ldeps/picotap -lptap
+TAP ?= ptap
+LIBTAP = -lptap
 
 .c.o:
 	$(CC) $(CFLAGS) -I$(IDIR) -c $< -o $@
 
-# all: $(DEPS) $(LIB) $(EXE)
-# all: $(DEPS) $(LIB)
-# all: $(DEPS) $(EXE)
-
-# DEPS
-libDEP.a: deps/DEP/libDEP.a
-deps/DEP/libDEP.a:
-	@cd deps/DEP && make
-# TDEPS
-ptap: deps/picotap/ptap
-deps/picotap/ptap:
-	@cd deps/picotap && make ptap
-libptap.a: deps/picotap/libptap.a
-deps/picotap/libptap.a:
-	@cd deps/picotap && make libptap.a
+# all: $(LIB) $(EXE)
+# all: $(LIB)
+# all: $(EXE)
 
 $(OBJ): Makefile $(INC)
 
@@ -60,12 +59,13 @@ $(LIB): $(LOBJ)
 	$(AR) -rcs $@ $^
 
 $(EXE): $(OBJ)
+#	$(LD) $^ $(LDFLAGS) -o $(EDIR)/$@
 	$(CC) $< -L$(LDIR) -l$(LNK) $(LDFLAGS) $(LIBDEP) -o $(EDIR)/$@
 
 t/%.exe: t/%.o
 	$(CC) $< -L$(LDIR) -l$(LNK) $(LDFLAGS) $(LIBTAP) -o $@
 
-test: $(TDEPS) $(TEXE)
+test: $(TEXE)
 
 $(TOBJ): $(LIB)
 
@@ -92,27 +92,21 @@ start_cd:
 stop_cd:
 	kill -9 $(TMPCD)
 
-clean: clean_DEP clean_tap
+clean:
 	rm -f $(OBJ) $(EXE) $(LOBJ) $(LIB) $(TOBJ) $(TEXE)
 
-clean_DEP:
-	@cd deps/DEP && make clean
-
-clean_tap:
-	@cd deps/picotap && make clean
-
-install: install_DEP
-	mkdir -p $(DEST)/$(PREFIX)/bin $(DEST)/$(PREFIX)/include $(DEST)/$(PREFIX)/lib
-	cp $(INC) $(DEST)/$(PREFIX)/include/
-	cp $(LIB) $(DEST)/$(PREFIX)/lib/
-	cp $(EXE) $(DEST)/$(PREFIX)/bin
-
-install_DEP:
-	@cd deps/DEP && make install
+install:
+	mkdir -p $(INSTALL_PATH)/bin $(INSTALL_PATH)/include $(INSTALL_PATH)/lib
+	cp -r $(IDIR)/* $(INSTALL_PATH)/include/
+	cp $(LIB) $(INSTALL_PATH)/lib/
+	cp $(EXE) $(INSTALL_PATH)/bin/
 
 showconfig:
+	@echo "OS="$(OS)
+	@echo "ARCH="$(ARCH)
 	@echo "DEST="$(DEST)
 	@echo "PREFIX="$(PREFIX)
+	@echo "INSTALL_PATH="$(INSTALL_PATH)
 	@echo "CFLAGS="$(CFLAGS)
 	@echo "LDFLAGS="$(LDFLAGS)
 	@echo "DDIR="$(DDIR)
@@ -136,3 +130,13 @@ showconfig:
 	@echo "TMPCT="$(TMPCT)
 	@echo "TMPCD="$(TMPCD)
 
+gstat:
+	git status
+
+gpush:
+	git commit
+	git push
+
+tarball:
+	cd && \
+	tar jcvf NewProj.$(shell date +%Y%m%d%H%M%S).tar.bz2 NewProj/
