@@ -9,24 +9,24 @@ CORES ?= 1
 
 # Basic feature detection
 OS = $(shell uname)
-ARCH ?= $(shell arch)
+ARCH ?= $(shell uname -m)
 
 ######################################################################
 
 CFLAGS ?= -Os -Wall -ansi -pedantic
 LDFLAGS ?= -s
 DDIR = docs
-DSRC =
-SRC = #$(shell ls src/*.c)
+DSRC = $(shell ls src/docs/*
+SRC = $(shell ls src/*.c)
 OBJ = $(SRC:.c=.o)
 HDR = INC.h
-IDIR = inc
+IDIR = include
 INC = $(IDIR)/$(HDR)
-EDIR = .
+EDIR = bin
 EXE = PROJ.exe
 LNK = LIB
-LDIR = .
-LSRC = $(shell ls lib/*.c)
+LDIR = lib
+LSRC = $(shell ls src/lib/*.c)
 LOBJ = $(LSRC:.c=.o)
 LIB = $(LDIR)/lib$(LNK).a
 TDIR = t
@@ -63,7 +63,7 @@ $(EXE): $(OBJ)
 	$(CC) $< -L$(LDIR) -l$(LNK) $(LDFLAGS) $(LIBDEP) -o $(EDIR)/$@
 
 t/%.exe: t/%.o
-	$(CC) $< -L$(LDIR) -l$(LNK) $(LDFLAGS) $(LIBTAP) -o $@
+	$(CC) $< -L$(LDIR) -l$(LNK) $(LDFLAGS) $(CFLAGS) $(LIBDEP) $(LIBTAP) -o $@
 
 test: $(TEXE)
 
@@ -95,11 +95,19 @@ stop_cd:
 clean:
 	rm -f $(OBJ) $(EXE) $(LOBJ) $(LIB) $(TOBJ) $(TEXE)
 
-install:
+#install: $(INC) $(LIB)
+install: $(EXE)
 	mkdir -p $(INSTALL_PATH)/bin $(INSTALL_PATH)/include $(INSTALL_PATH)/lib
-	cp -r $(IDIR)/* $(INSTALL_PATH)/include/
-	cp $(LIB) $(INSTALL_PATH)/lib/
-	cp $(EXE) $(INSTALL_PATH)/bin/
+	rm -f .footprint
+#	@for T in $(INC) $(LIB); \
+	@for T in $(EXE); \
+	do ( \
+		echo $(INSTALL_PATH)/$$T >> .footprint; \
+		cp -v --parents $$T $(INSTALL_PATH) \
+	); done
+
+uninstall: .footprint
+	@for T in `cat .footprint`; do rm -v $$T; done
 
 showconfig:
 	@echo "OS="$(OS)
@@ -138,5 +146,4 @@ gpush:
 	git push
 
 tarball:
-	cd && \
-	tar jcvf NewProj.$(shell date +%Y%m%d%H%M%S).tar.bz2 NewProj/
+	cd ../. && tar jcvf NewProj.$(shell date +%Y%m%d%H%M%S).tar.bz2 NewProj/
