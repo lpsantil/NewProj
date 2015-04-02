@@ -16,7 +16,7 @@ ARCH ?= $(shell uname -m)
 CFLAGS ?= -Os -Wall -ansi -pedantic
 LDFLAGS ?= -s
 DDIR = docs
-DSRC = $(shell ls src/docs/*
+DSRC = $(shell ls src/docs/*)
 SRC = $(shell ls src/*.c)
 OBJ = $(SRC:.c=.o)
 HDR = INC.h
