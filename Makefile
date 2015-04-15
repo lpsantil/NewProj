@@ -1,7 +1,4 @@
-DEST ?=
-PREFIX ?= usr/local
-
-INSTALL_PATH = $(DEST)/$(PREFIX)
+DESTDIR ?= /usr/local
 
 ######################################################################
 # Core count
@@ -11,14 +8,29 @@ CORES ?= 1
 OS = $(shell uname)
 ARCH ?= $(shell uname -m)
 
+ifeq ($(ARCH), i686)
+	ARCH = i386
+endif
+
+ifeq ($(ARCH), i386)
+	MSIZE = 32
+endif
+
+ifeq ($(ARCH), x86_64)
+	MSIZE = 64
+endif
+
 ######################################################################
 
+# Comment next line if you want System Default/GNU BFD LD instead
+LD = gold
 CFLAGS ?= -Os -Wall -ansi -pedantic
 LDFLAGS ?= -s
 DDIR = docs
 DSRC = $(shell ls src/docs/*)
 SRC = $(shell ls src/*.c)
 OBJ = $(SRC:.c=.o)
+SDEPS = $(SRC:.c=.d)
 HDR = INC.h
 IDIR = include
 INC = $(IDIR)/$(HDR)
@@ -28,11 +40,27 @@ LNK = LIB
 LDIR = lib
 LSRC = $(shell ls src/lib/*.c)
 LOBJ = $(LSRC:.c=.o)
+LSDEPS = $(LSRC:.c=.d)
 LIB = $(LDIR)/lib$(LNK).a
 TDIR = t
 TSRC = $(shell ls t/*.c)
 TOBJ = $(TSRC:.c=.o)
+TSDEPS = $(TSRC:.c=.d)
 TEXE = $(TOBJ:.o=.exe)
+
+# Since LDFLAGS defaults to "-s", probably better to override unless
+# you have a default you would like to maintain
+ifeq ($(WITH_DEBUG), 1)
+	CFLAGS += -g
+	LDFLAGS += -g
+endif
+
+# Since LDFLAGS defaults to "-s", probably better to override unless
+# you have a default you would like to maintain
+ifeq ($(WITH_PROFILING), 1)
+	CFLAGS += -pg
+	LDFLAGS += -pg
+endif
 
 TMPCI = $(shell cat tmp.ci.pid)
 TMPCT = $(shell cat tmp.ct.pid)
@@ -46,30 +74,32 @@ TMPCD = $(shell cat tmp.cd.pid)
 TAP ?= ptap
 LIBTAP = -lptap
 
-.c.o:
-	$(CC) $(CFLAGS) -I$(IDIR) -c $< -o $@
+%.o: %.c $(INC) Makefile
+	$(CC) $(CFLAGS) -MMD -MP -I$(IDIR) -c $< -o $@
 
+%.exe: %.o $(LIB) Makefile
+	$(LD) $< -L$(LDIR) -l$(LNK) $(LDFLAGS) $(LIBDEP) -o $@
+
+t/%.exe: t/%.o $(LIB) Makefile
+	$(LD) $< -L$(LDIR) -l$(LNK) $(LDFLAGS) $(LIBDEP) $(LIBTAP) -o $@
+
+######################################################################
+######################## DO NOT MODIFY BELOW #########################
+######################################################################
+
+.PHONY = all test runtest clean start_ci stop_ci start_ct stop_ct
+.PHONY = start_cd stop_cd install uninstall showconfig gstat gpush
+.PHONY = tarball
+
+# Pick one
 # all: $(LIB) $(EXE)
 # all: $(LIB)
 # all: $(EXE)
 
-$(OBJ): Makefile $(INC)
-
 $(LIB): $(LOBJ)
 	$(AR) -rcs $@ $^
 
-$(EXE): $(OBJ)
-#	$(LD) $^ $(LDFLAGS) -o $(EDIR)/$@
-	$(CC) $< -L$(LDIR) -l$(LNK) $(LDFLAGS) $(LIBDEP) -o $(EDIR)/$@
-
-t/%.exe: t/%.o
-	$(CC) $< -L$(LDIR) -l$(LNK) $(LDFLAGS) $(CFLAGS) $(LIBDEP) $(LIBTAP) -o $@
-
-test: $(TEXE)
-
-$(TOBJ): $(LIB)
-
-$(TEXE): $(TOBJ)
+test: $(LIB) $(TEXE) Makefile
 
 runtest: $(TEXE)
 	for T in $^ ; do $(TAP) $$T ; done
@@ -93,7 +123,7 @@ stop_cd:
 	kill -9 $(TMPCD)
 
 clean:
-	rm -f $(OBJ) $(EXE) $(LOBJ) $(LIB) $(TOBJ) $(TEXE)
+	rm -f $(OBJ) $(EXE) $(LOBJ) $(LIB) $(TOBJ) $(TEXE) *.tmp $(SDEPS) $(LSDEPS) $(TSDEPS)
 
 #install: $(INC) $(LIB)
 install: $(EXE)
@@ -109,14 +139,18 @@ install: $(EXE)
 uninstall: .footprint
 	@for T in `cat .footprint`; do rm -v $$T; done
 
+-include $(SDEPS) $(LSDEPS) $(TSDEPS)
+
 showconfig:
 	@echo "OS="$(OS)
 	@echo "ARCH="$(ARCH)
-	@echo "DEST="$(DEST)
-	@echo "PREFIX="$(PREFIX)
-	@echo "INSTALL_PATH="$(INSTALL_PATH)
+	@echo "MSIZE="$(MSIZE)
+	@echo "DESTDIR="$(DESTDIR)
 	@echo "CFLAGS="$(CFLAGS)
 	@echo "LDFLAGS="$(LDFLAGS)
+	@echo "SDEPS="$(SDEPS)
+	@echo "LSDEPS="$(LSDEPS)
+	@echo "TSDEPS="$(TSDEPS)
 	@echo "DDIR="$(DDIR)
 	@echo "DSRC="$(DSRC)
 	@echo "SRC="$(SRC)
