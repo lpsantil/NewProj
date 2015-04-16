@@ -106,6 +106,7 @@ runtest: $(TEXE)
 
 start_ci:
 	watch time -p make clean all & echo $$! > tmp.ci.pid
+#	while ! inotifywait -e modify $(SRC) $(LSRC) $(TSRC); do make clean all; done
 
 stop_ci:
 	kill -9 $(TMPCI)
