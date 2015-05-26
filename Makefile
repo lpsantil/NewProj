@@ -87,9 +87,9 @@ t/%.exe: t/%.o $(LIB) Makefile
 ######################## DO NOT MODIFY BELOW #########################
 ######################################################################
 
-.PHONY = all test runtest clean start_ci stop_ci start_ct stop_ct
-.PHONY = start_cd stop_cd install uninstall showconfig gstat gpush
-.PHONY = tarball
+.PHONY: all test runtest clean start_ci stop_ci start_ct stop_ct
+.PHONY: start_cd stop_cd install uninstall showconfig gstat gpush
+.PHONY: tarball
 
 # Pick one
 # all: $(LIB) $(EXE)
@@ -105,8 +105,13 @@ runtest: $(TEXE)
 	for T in $^ ; do $(TAP) $$T ; done
 
 start_ci:
-	watch time -p make clean all & echo $$! > tmp.ci.pid
-#	while ! inotifywait -e modify $(SRC) $(LSRC) $(TSRC); do make clean all; done
+	( watch time -p make clean all ) &> tmp.ci.log & echo $$! > tmp.ci.pid
+
+change_ci:
+	make change_ci_pid & echo $$! > tmp.ci.pid
+
+change_ci_pid:
+	while ! inotifywait -e modify $(SDEPS) $(SRC) ; do time -p make clean all; done
 
 stop_ci:
 	kill -9 $(TMPCI)
